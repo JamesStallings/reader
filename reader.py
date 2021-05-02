@@ -475,7 +475,7 @@ def reader(filename):
 
             return htmlPrologue + markdown2.markdown(read_data, extras=["footnote","strike","tables","code-color","code-friendly","cuddled-lists","fenced-code-blocks"]) + htmlEpilogue
 
-    return htmlPrologue + markdown2.markdown('*404* NOTFOUND\n\r', extras=["footnote","strike","tables","code-color","code-friendly","cuddled-lists","fenced-code-blocks"]) + "<br><h6><a href='http://localhost:8000/writenewmarkdown/" + filename + "'>create " + filename + "</a></h6><br>" + htmlEpilogue
+    return htmlPrologue + markdown2.markdown('*404* NOTFOUND\n\r', extras=["footnote","strike","tables","code-color","code-friendly","cuddled-lists","fenced-code-blocks"]) + "<br>" + htmlEpilogue
 
 
 if __name__ == '__main__':
