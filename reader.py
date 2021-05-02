@@ -406,7 +406,7 @@ def sethtmlbasis():
         <div>
           <a href="#modal-close" title="close" class="modal-close">close &times;</a>
           <h1>system menu</h1>
-          <div><a href='http://localhost:8000/togglecss'>toggle CSS<div>
+          <div><a href='http://reader.code4peeps.life/togglecss'>toggle CSS<div>
         </div>
       </div>
     </footer>
