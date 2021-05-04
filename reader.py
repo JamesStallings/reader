@@ -1,14 +1,15 @@
 from flask import Flask, request, redirect, url_for, send_from_directory
 import glob
 import markdown2
+import mf2py
 from os import path
 
 app = Flask(__name__, static_url_path='')
 currentresource = ""
 cssstate = "day"
 css = ""
-htmlPrologue = ""
-htmlEpilogue = ""
+htmlPrefix = ""
+htmlPostfix = ""
 
 """ siteroot = "site/"
 siteimages = "images/"
@@ -386,10 +387,11 @@ img {
 css = cssday
 
 def sethtmlbasis():
-    global htmlPrologue
-    global htmlEpilogue
+    global htmlPrefix
+    global htmlPostfix
+    global hcard
 
-    htmlPrologue = """
+    htmlPrefix = """
 <!DOCTYPE html>
 <html>
   <head>
@@ -399,7 +401,7 @@ def sethtmlbasis():
   <body>
 """
 
-    htmlEpilogue = """
+    htmlPostfix = """
     <footer>
       <h6><a href="#open-modal">system menu</a></h6>
       <div id="open-modal" class="modal-window">
@@ -414,17 +416,15 @@ def sethtmlbasis():
 </html>
 """
 
-
 def redirect_url():
     return request.args.get('next') or request.referrer or url_for('index')
-
 
 @app.route('/togglecss', methods=['GET'])
 def togglecss():
     global cssstate
     global css
-    global htmlPrologue
-    global htmlEpilog
+    global htmlPrefix
+    global htmlPostfix
 
     if cssstate == "day":
         cssstate = "night"
@@ -438,28 +438,38 @@ def togglecss():
 
 @app.route('/render/')
 def renderdefaultview():
-    global htmlPrologue
-    global htmlEpilog
+    global htmlPrefix
+    global htmlPostfix
     global siteroot
     global sitemarkdown
+
+    sethtmlbasis()
+
+    if path.exists(siteroot + sitemarkdown + 'index.md.pre'):
+        with open(siteroot + sitemarkdown + 'index.md.pre'):
+            htmlPrefix = f.read()
+
+    if path.exists(siteroot + sitemarkdown + 'index.md.post'):
+        with open(siteroot + sitemarkdown + 'index.md.post'):
+            htmlPostfix = f.read()
 
     if path.exists(siteroot + sitemarkdown + 'index.md'):
         with open(siteroot + sitemarkdown + 'index.md') as f:
             read_data = f.read()
 
-        return htmlPrologue + markdown2.markdown(read_data, extras=["footnote","strike","tables","code-color","code-friendly","cuddled-lists","fenced-code-blocks"]) + htmlEpilogue
+        return htmlPrefix + markdown2.markdown(read_data, extras=["footnote","strike","tables","code-color","code-friendly","cuddled-lists","fenced-code-blocks"]) + htmlPostfix
     else:
         scripts = ""
         for file_name in glob.iglob('./*.md', recursive=True):
             scripts = scripts + '[' + file_name + '](' + file_name + ')' + '\n\r'
 
-        return htmlPrologue + markdown2.markdown(scripts, extras=["footnote","strike","tables","code-color","code-friendly","cuddled-lists","fenced-code-blocks"]) + htmlEpilogue
+        return htmlPrefix + markdown2.markdown(scripts, extras=["footnote","strike","tables","code-color","code-friendly","cuddled-lists","fenced-code-blocks"]) + htmlPostfix
 
 
 @app.route('/reader/<filename>')
 def reader(filename):
-    global htmlPrologue
-    global htmlEpilogue
+    global htmlPrefix
+    global htmlPostfix
     global siteroot
     global siteimages
     global sitemarkdown
@@ -469,13 +479,25 @@ def reader(filename):
             return send_from_directory(siteroot + siteimages, filename)
 
     if path.exists(siteroot + sitemarkdown + filename):
+        print("read of " + siteroot + sitemarkdown + filename + " pending")
         if filename[-3:] == ".md":
+            print("reading " + siteroot + sitemarkdown + filename)
             with open(siteroot + sitemarkdown + filename) as f:
                 read_data = f.read()
 
-            return htmlPrologue + markdown2.markdown(read_data, extras=["footnote","strike","tables","code-color","code-friendly","cuddled-lists","fenced-code-blocks"]) + htmlEpilogue
+            if path.exists(siteroot + sitemarkdown + filename + '.pre'):
+                print("reading " + siteroot + sitemarkdown + filename)
+                with open(siteroot + sitemarkdown + filename + '.pre') as f:
+                    htmlPrefix = f.read()
 
-    return htmlPrologue + markdown2.markdown('*404* NOTFOUND\n\r', extras=["footnote","strike","tables","code-color","code-friendly","cuddled-lists","fenced-code-blocks"]) + "<br>" + htmlEpilogue
+            if path.exists(siteroot + sitemarkdown + filename + '.post'):
+                print("reading " + siteroot + sitemarkdown + filename)
+                with open(siteroot + sitemarkdown + filename + '.post') as f:
+                    htmlPostfix = f.read()
+
+        return htmlPrefix + markdown2.markdown(read_data, extras=["footnote","strike","tables","code-color","code-friendly","cuddled-lists","fenced-code-blocks"]) + htmlPostfix
+
+    return htmlPrefix + markdown2.markdown('*404* NOTFOUND\n\r', extras=["footnote","strike","tables","code-color","code-friendly","cuddled-lists","fenced-code-blocks"]) + "<br>" + htmlPostfix
 
 
 if __name__ == '__main__':
